@@ -1,0 +1,11 @@
+node_modules/
+.env
+dist/
+.prisma/
+*.log
+__pycache__/
+*.pyc
+.venv/
+venv/
+ai/data/*.csv
+ai/data/*.pkl

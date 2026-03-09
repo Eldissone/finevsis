@@ -1,0 +1,148 @@
+// prisma/schema.prisma
+// FINEVSIS — Esquema do Banco de Dados
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TrendStatus {
+  active
+  declining
+  emerging
+  stable
+}
+
+enum OpportunityPriority {
+  high
+  medium
+  low
+}
+
+enum ProjectStatus {
+  suggested
+  in_review
+  approved
+  in_progress
+  completed
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("analyst")
+  bio       String?
+  avatarUrl String?  @map("avatar_url")
+  country   String?
+  city      String?
+  projects  Project[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Trend {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  category    String?
+  sector      String?
+  country     String?
+  city        String?
+  growthRate  Float       @default(0) @map("growth_rate")
+  relevance   Float       @default(0)
+  source      String?
+  sourceUrl   String?     @map("source_url")
+  status      TrendStatus @default(emerging)
+  rawData     Json?       @map("raw_data")
+  collectedAt DateTime    @default(now()) @map("collected_at")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  @@map("trends")
+}
+
+model Problem {
+  id            String        @id @default(uuid())
+  description   String
+  sector        String?
+  frequency     Float         @default(0)
+  impact        Float         @default(0)
+  tags          String[]
+  source        String?
+  validated     Boolean       @default(false)
+  opportunities Opportunity[]
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@map("problems")
+}
+
+model Opportunity {
+  id                  String              @id @default(uuid())
+  problemId           String?             @map("problem_id")
+  problem             Problem?            @relation(fields: [problemId], references: [id])
+  title               String
+  description         String?
+  solution            String?
+  sector              String?
+  country             String?
+  city                String?
+  marketDemand        Float               @default(0) @map("market_demand")
+  competitionLevel    Float               @default(0) @map("competition_level")
+  technicalViability  Float               @default(0) @map("technical_viability")
+  impactScore         Float               @default(0) @map("impact_score")
+  scalability         Float               @default(0)
+  finalScore          Float               @default(0) @map("final_score")
+  priority            OpportunityPriority @default(medium)
+  tags                String[]
+  aiAnalysis          Json?               @map("ai_analysis")
+  projects            Project[]
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+
+  @@map("opportunities")
+}
+
+model Project {
+  id              String        @id @default(uuid())
+  opportunityId   String?       @map("opportunity_id")
+  opportunity     Opportunity?  @relation(fields: [opportunityId], references: [id])
+  name            String
+  description     String?
+  type            String?
+  country         String?
+  city            String?
+  techStack       String[]      @map("tech_stack")
+  targetAudience  String?       @map("target_audience")
+  revenueModel    String?       @map("revenue_model")
+  estimatedCost   Float?        @map("estimated_cost")
+  estimatedTime   Int?          @map("estimated_time")
+  status          ProjectStatus @default(suggested)
+  nextSteps       Json?         @map("next_steps")
+  createdById     String?       @map("created_by")
+  createdBy       User?         @relation(fields: [createdById], references: [id])
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@map("projects")
+}
+
+model MarketData {
+  id          String   @id @default(uuid())
+  source      String
+  dataType    String?  @map("data_type")
+  keyword     String?
+  region      String   @default("AO")
+  rawPayload  Json     @map("raw_payload")
+  processed   Boolean  @default(false)
+  collectedAt DateTime @default(now()) @map("collected_at")
+
+  @@map("market_data")
+}
