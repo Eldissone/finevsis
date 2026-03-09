@@ -1,3 +1,4 @@
+import '../src/config/env.js';
 import { PrismaClient } from '@prisma/client';
 import { calculateOpportunityScore, getPriority } from '../src/services/scoringService.js';
 

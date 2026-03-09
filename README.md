@@ -61,6 +61,7 @@ cp .env.example .env
 ```
 
 Edite o `.env` e preencha:
+- `DATABASE_URL` - URL do PostgreSQL usada pelo Prisma
 - `ANTHROPIC_API_KEY` — obtenha em https://console.anthropic.com
 - `JWT_SECRET` — qualquer string segura (ex: gere com `openssl rand -hex 32`)
 - APIs opcionais: `NEWSAPI_KEY`, `SERPAPI_KEY`
@@ -89,12 +90,12 @@ Aguarde todos os serviços iniciarem (≈2 minutos na primeira vez).
 ### Backend (Node.js)
 
 ```bash
+# Configure o banco de dados na raiz do projeto
+cp .env.example .env
+# Edite .env com suas credenciais
+
 cd backend
 npm install
-
-# Configure o banco de dados
-cp ../.env.example .env
-# Edite .env com suas credenciais
 
 # Aplique o esquema no PostgreSQL
 npx prisma db push
@@ -105,6 +106,8 @@ node prisma/seed.js
 # Inicie em modo desenvolvimento
 npm run dev
 ```
+
+O backend carrega automaticamente `backend/.env` e `../.env`. Se `DATABASE_URL` nao estiver definido, ele monta a URL a partir de `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT` e `POSTGRES_DB`.
 
 ### Frontend (React)
 

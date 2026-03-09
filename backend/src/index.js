@@ -1,5 +1,5 @@
 // src/index.js — FINEVSIS Backend Entry Point
-import 'dotenv/config';
+import './config/env.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';

@@ -1,7 +1,7 @@
 // src/collectors/scheduler.js
 // Agendador de coleta de dados com node-cron
 
-import 'dotenv/config';
+import '../config/env.js';
 import cron from 'node-cron';
 import { collectNewsData, collectPublicApiData } from './marketCollector.js';
 import { logger } from '../services/logger.js';
