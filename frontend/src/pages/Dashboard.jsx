@@ -8,26 +8,33 @@ import { analysisAPI, opportunitiesAPI, trendsAPI } from '../services/api.js';
 import { AFRICAN_COUNTRIES, getAfricanCitiesForCountry } from '../data/africanMarkets.js';
 
 const portraitImages = [
+  // Consumer pulse — crowd/street market
   {
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1543163521-1bf75e388b52?auto=format&fit=crop&w=800&q=80',
   },
+  // Market interviews — people in conversation
   {
-    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1521790361509-74bba942ff6f?auto=format&fit=crop&w=800&q=80',
   },
+  // Product demand — analytics/dashboard screen
   {
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80',
   },
+  // Operator insights — operations/factory
   {
-    image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=800&q=80',
   },
+  // Field signals — agriculture/field work
   {
-    image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80',
   },
+  // Regional context — city skyline
   {
-    image: 'https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=800&q=80',
   },
+  // Distributed teams — remote work
   {
-    image: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
   },
 ];
 
@@ -94,6 +101,8 @@ export default function Dashboard() {
   const [populating, setPopulating] = useState(false);
   const [populateError, setPopulateError] = useState('');
   const suggestedCities = getAfricanCitiesForCountry(country);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     analysisAPI.dashboard()
@@ -116,7 +125,13 @@ export default function Dashboard() {
         setOpportunities({ data: [], filters: { countries: [], cities: [] } });
       })
       .finally(() => setLoading(false));
-  }, [country, city]);
+  }, [country, city, tick]);
+
+  useEffect(() => {
+    if (!autoRefresh) return undefined;
+    const id = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(id);
+  }, [autoRefresh]);
 
   const filters = mergeFilters(trends.filters, opportunities.filters);
   const stats = dashboard?.stats || {};
@@ -273,6 +288,13 @@ export default function Dashboard() {
                 {populating ? 'Populando...' : 'Popular país'}
               </button>
               {populateError && <span className="text-sm text-red-700">{populateError}</span>}
+              <button
+                type="button"
+                className={`ghost-action inline-flex items-center gap-2 ${autoRefresh ? 'filter-chip-active' : ''}`}
+                onClick={() => setAutoRefresh(v => !v)}
+              >
+                {autoRefresh ? 'Auto refresh: ON' : 'Auto refresh: OFF'}
+              </button>
             </div>
           </div>
 

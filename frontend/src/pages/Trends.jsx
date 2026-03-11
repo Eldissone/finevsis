@@ -32,6 +32,8 @@ export default function Trends() {
   const [city, setCity] = useState('');
   const [loading, setLoading] = useState(true);
   const suggestedCities = getAfricanCitiesForCountry(country);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     setLoading(true);
@@ -39,7 +41,13 @@ export default function Trends() {
       .then(response => setPayload(response.data))
       .catch(() => setPayload({ data: [], filters: { countries: [], cities: [] } }))
       .finally(() => setLoading(false));
-  }, [country, city]);
+  }, [country, city, tick]);
+
+  useEffect(() => {
+    if (!autoRefresh) return undefined;
+    const id = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(id);
+  }, [autoRefresh]);
 
   const chartData = payload.data.map(trend => ({
     name: trend.title.split(' ').slice(0, 3).join(' '),
@@ -104,6 +112,15 @@ export default function Trends() {
           <Metric label={messages.trendsPage.metrics.growthLabel} value={metrics.averageGrowth} copy={messages.trendsPage.metrics.growthCopy} />
           <Metric label={messages.trendsPage.metrics.localizedLabel} value={metrics.localized} copy={messages.trendsPage.metrics.localizedCopy} />
           <Metric label={messages.trendsPage.metrics.sectorsLabel} value={metrics.sectors} copy={messages.trendsPage.metrics.sectorsCopy} />
+        </div>
+        <div className="mt-3">
+          <button
+            type="button"
+            className={`ghost-action inline-flex items-center gap-2 ${autoRefresh ? 'filter-chip-active' : ''}`}
+            onClick={() => setAutoRefresh(v => !v)}
+          >
+            {autoRefresh ? 'Auto refresh: ON' : 'Auto refresh: OFF'}
+          </button>
         </div>
       </section>
 

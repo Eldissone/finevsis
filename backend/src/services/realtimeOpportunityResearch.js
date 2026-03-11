@@ -164,6 +164,23 @@ function buildHeuristicOpportunities(signals, { sector, country, city, limit }) 
   });
 }
 
+function buildGenericSignals({ sector, country, city, limit }) {
+  const location = buildLocationContext({ country, city });
+  const base = normalizeText(sector) || 'Mercado';
+  const templates = [
+    `${base} — adoção digital acelera em ${location}`,
+    `${base} — novas parcerias e canais em ${location}`,
+    `${base} — procura por eficiência operacional em ${location}`,
+    `${base} — soluções de baixo custo ganham tração em ${location}`,
+    `${base} — consumidores migram para experiências mobile em ${location}`,
+  ];
+  return Array.from({ length: Math.max(3, Math.min(limit, 8)) }, (_, i) => ({
+    title: templates[i % templates.length],
+    description: `Sinal heurístico construído a partir de contexto local (${location}) e foco setorial (${base}).`,
+    sourceName: 'heuristic',
+    url: '',
+  }));
+}
 function sanitizeAiOpportunity(raw, index, { sector, country, city }) {
   const marketDemand = clampScore(raw.market_demand ?? raw.marketDemand, 60);
   const competitionLevel = clampScore(raw.competition_level ?? raw.competitionLevel, 35);
@@ -256,9 +273,10 @@ export async function researchRealtimeOpportunities({ sector, country, city, lim
   const signals = liveSignals.length > 0 ? liveSignals : await fetchStoredSignals(Math.max(numericLimit * 2, 10));
 
   if (signals.length === 0) {
+    const genericSignals = buildGenericSignals({ sector, country, city, limit: numericLimit });
     return {
-      opportunities: [],
-      meta: buildResearchMeta('empty', []),
+      opportunities: buildHeuristicOpportunities(genericSignals, { sector, country, city, limit: numericLimit }),
+      meta: buildResearchMeta('heuristic_empty', genericSignals),
     };
   }
 

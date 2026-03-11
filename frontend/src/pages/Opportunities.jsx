@@ -64,6 +64,7 @@ export default function Opportunities() {
   const [city, setCity] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshToken, setRefreshToken] = useState(0);
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
   useEffect(() => {
     setLoading(true);
@@ -86,6 +87,14 @@ export default function Opportunities() {
       })
       .finally(() => setLoading(false));
   }, [country, city, refreshToken]);
+
+  useEffect(() => {
+    if (!autoRefresh) return undefined;
+    const id = setInterval(() => {
+      setRefreshToken(current => current + 1);
+    }, 30000);
+    return () => clearInterval(id);
+  }, [autoRefresh]);
 
   const suggestedCities = useMemo(() => getAfricanCitiesForCountry(country), [country]);
 
@@ -164,9 +173,20 @@ export default function Opportunities() {
                 <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
                 {loading ? messages.opportunitiesPage.refreshLoading : messages.opportunitiesPage.refreshIdle}
               </button>
+              <button
+                type="button"
+                className={`ghost-action inline-flex items-center gap-2 ${autoRefresh ? 'filter-chip-active' : ''}`}
+                onClick={() => setAutoRefresh(v => !v)}
+              >
+                {autoRefresh ? 'Auto refresh: ON' : 'Auto refresh: OFF'}
+              </button>
               {payload.meta?.mode && (
-                <span className={`filter-chip ${payload.meta.mode === 'database_fallback' ? '' : 'filter-chip-active'}`}>
-                  {payload.meta.mode === 'database_fallback' ? messages.opportunitiesPage.liveFallbackBadge : messages.opportunitiesPage.liveActiveBadge}
+                <span className={`filter-chip ${payload.meta.mode.includes('heuristic') ? 'filter-chip-active' : (payload.meta.mode === 'database_fallback' ? '' : 'filter-chip-active')}`}>
+                  {payload.meta.mode.includes('heuristic')
+                    ? 'HEURISTIC'
+                    : (payload.meta.mode === 'database_fallback'
+                      ? messages.opportunitiesPage.liveFallbackBadge
+                      : messages.opportunitiesPage.liveActiveBadge)}
                 </span>
               )}
             </div>
