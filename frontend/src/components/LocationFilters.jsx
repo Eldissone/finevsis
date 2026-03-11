@@ -1,55 +1,61 @@
 import { useI18n } from '../context/I18nContext.jsx';
 
-function FilterRow({ label, options, activeValue, onChange, emptyLabel }) {
+function sortValues(values) {
+  return [...new Set(values.filter(Boolean))]
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function FilterSelect({ label, options, value, onChange, emptyLabel, disabled = false }) {
   return (
     <div className="filter-row">
       <div className="filter-label">{label}</div>
-      <div className="filter-group">
-        <button
-          type="button"
-          className={`filter-chip ${!activeValue ? 'filter-chip-active' : ''}`}
-          onClick={() => onChange('')}
-        >
-          {emptyLabel}
-        </button>
+      <select
+        className="form-field w-full"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        disabled={disabled}
+      >
+        <option value="">{emptyLabel}</option>
         {options.map(option => (
-          <button
-            type="button"
-            key={option}
-            className={`filter-chip ${activeValue === option ? 'filter-chip-active' : ''}`}
-            onClick={() => onChange(option)}
-          >
-            {option}
-          </button>
+          <option key={option} value={option}>{option}</option>
         ))}
-      </div>
+      </select>
     </div>
   );
 }
 
-export default function LocationFilters({ filters = {}, country = '', city = '', onCountryChange, onCityChange }) {
-  const countries = filters.countries || [];
-  const cities = filters.cities || [];
+export default function LocationFilters({
+  filters = {},
+  country = '',
+  city = '',
+  onCountryChange,
+  onCityChange,
+  extraCountries = [],
+  extraCities = [],
+}) {
+  const countries = sortValues([...(filters.countries || []), ...extraCountries]);
+  const cities = sortValues([...(filters.cities || []), ...extraCities]);
   const { messages } = useI18n();
 
   return (
     <div className="filter-panel">
-      <FilterRow
+      <FilterSelect
         label={messages.common.country}
         options={countries}
-        activeValue={country}
+        value={country}
         emptyLabel={messages.common.allCountries}
         onChange={value => {
           onCountryChange(value);
           onCityChange('');
         }}
       />
-      <FilterRow
+      <FilterSelect
         label={messages.common.city}
         options={cities}
-        activeValue={city}
+        value={city}
         emptyLabel={messages.common.allCities}
         onChange={onCityChange}
+        disabled={!country && cities.length === 0}
       />
     </div>
   );

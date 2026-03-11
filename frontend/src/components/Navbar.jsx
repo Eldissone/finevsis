@@ -35,12 +35,10 @@ export default function Navbar() {
   const { user, logout, ready } = useAuth();
   const { locale, setLocale, messages } = useI18n();
 
-  const leftLinks = [
-    { to: '/trends', label: messages.nav.trends },
-    { to: '/opportunities', label: messages.nav.opportunities },
-  ];
 
   const rightLinks = [
+    { to: '/trends', label: messages.nav.trends },
+    { to: '/opportunities', label: messages.nav.opportunities },
     { to: '/analysis', label: messages.nav.analysis },
     { to: '/projects', label: messages.nav.projects },
   ];
@@ -48,21 +46,35 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-40 px-4 pt-4 sm:px-6 lg:px-8">
       <div className="surface mx-auto max-w-[1320px] !px-6 !py-4">
-        <div className="hidden items-center gap-6 lg:grid lg:grid-cols-[1fr_auto_1fr]">
-          <nav className="flex items-center gap-2">
-            {leftLinks.map(link => <NavTextLink key={link.to} {...link} />)}
-          </nav>
 
-          <Link to="/" className="justify-self-center text-center">
-            <div className="font-display text-lg font-extrabold tracking-[-0.05em] text-ink-950">FINEVSIS</div>
-            <div className="text-[11px] uppercase tracking-[0.35em] text-ink-500">{messages.common.marketWorkflow}</div>
+        {/* DESKTOP */}
+        <div className="hidden items-center justify-between lg:flex">
+
+          {/* Logo */}
+          <Link to="/" className="text-left">
+            <div className="font-display text-lg font-extrabold tracking-[-0.05em] text-ink-950">
+              FINEVSIS
+            </div>
+            <div className="text-[11px] uppercase tracking-[0.35em] text-ink-500">
+              {messages.common.marketWorkflow}
+            </div>
           </Link>
 
-          <div className="flex items-center justify-end gap-2">
-            <LanguageSwitcher locale={locale} setLocale={setLocale} label={messages.common.language} />
-            {rightLinks.map(link => <NavTextLink key={link.to} {...link} />)}
+          {/* Navegação */}
+          <nav className="flex items-center gap-6">
+            {rightLinks.map(link => (
+              <NavTextLink key={link.to} {...link} />
+            ))}
+          </nav>
 
-            {!ready && <span className="chip">{messages.common.sync}</span>}
+          {/* Ações */}
+          <div className="flex items-center gap-2">
+
+            {!ready && (
+              <span className="chip">
+                {messages.common.sync}
+              </span>
+            )}
 
             {ready && !user && (
               <>
@@ -70,6 +82,7 @@ export default function Navbar() {
                   <LogIn size={15} />
                   {messages.common.login}
                 </Link>
+
                 <Link to="/register" className="primary-action inline-flex items-center gap-2">
                   <UserRound size={15} />
                   {messages.common.getStarted}
@@ -79,18 +92,21 @@ export default function Navbar() {
 
             {ready && user && (
               <>
-                <Link to="/profile" className="profile-trigger">
+                <Link to="/profile" className="profile-trigger flex items-center gap-2">
                   <AvatarBadge user={user} className="h-8 w-8" />
                   <span className="profile-trigger__meta">
-                    <span className="profile-trigger__name">{user.name}</span>
+                    <span className="profile-trigger__name">
+                      {user.name}
+                    </span>
                   </span>
                 </Link>
+
                 <button
                   type="button"
                   className="primary-action inline-flex items-center gap-2"
                   onClick={() => {
-                    logout();
-                    navigate('/');
+                    logout()
+                    navigate('/')
                   }}
                 >
                   <LogOut size={15} />
@@ -98,29 +114,72 @@ export default function Navbar() {
                 </button>
               </>
             )}
+
+            <LanguageSwitcher
+              locale={locale}
+              setLocale={setLocale}
+              label={messages.common.language}
+            />
+
           </div>
         </div>
 
+
+        {/* MOBILE */}
         <div className="flex items-center justify-between gap-4 lg:hidden">
+
           <Link to="/" className="text-left">
-            <div className="font-display text-lg font-extrabold tracking-[-0.05em] text-ink-950">FINEVSIS</div>
-            <div className="text-[11px] uppercase tracking-[0.35em] text-ink-500">{messages.common.marketWorkflow}</div>
+            <div className="font-display text-lg font-extrabold tracking-[-0.05em] text-ink-950">
+              FINEVSIS
+            </div>
+            <div className="text-[11px] uppercase tracking-[0.35em] text-ink-500">
+              {messages.common.marketWorkflow}
+            </div>
           </Link>
 
           <div className="flex items-center gap-2">
-            <LanguageSwitcher locale={locale} setLocale={setLocale} label={messages.common.language} />
-            {ready && !user && <Link to="/login" className="ghost-action">{messages.common.login}</Link>}
-            {ready && user && <Link to="/profile" className="ghost-action">{messages.common.profile}</Link>}
+
+            <LanguageSwitcher
+              locale={locale}
+              setLocale={setLocale}
+              label={messages.common.language}
+            />
+
+            {ready && !user && (
+              <Link to="/login" className="ghost-action">
+                {messages.common.login}
+              </Link>
+            )}
+
+            {ready && user && (
+              <Link to="/profile" className="ghost-action">
+                {messages.common.profile}
+              </Link>
+            )}
+
             <div className="brand-cube">
               <Menu size={16} />
             </div>
+
           </div>
         </div>
 
+
+        {/* MOBILE NAV */}
         <div className="mt-4 flex flex-wrap gap-2 lg:hidden">
-          {[...leftLinks, ...rightLinks].map(link => <NavTextLink key={link.to} {...link} />)}
-          {!user && ready && <Link to="/register" className="primary-action">{messages.common.getStarted}</Link>}
+
+          {[...rightLinks].map(link => (
+            <NavTextLink key={link.to} {...link} />
+          ))}
+
+          {!user && ready && (
+            <Link to="/register" className="primary-action">
+              {messages.common.getStarted}
+            </Link>
+          )}
+
         </div>
+
       </div>
     </header>
   );

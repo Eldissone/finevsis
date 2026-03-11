@@ -4,6 +4,7 @@ import LocationFilters from '../components/LocationFilters.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useI18n } from '../context/I18nContext.jsx';
 import { projectsAPI } from '../services/api.js';
+import { AFRICAN_COUNTRIES, getAfricanCitiesForCountry } from '../data/africanMarkets.js';
 
 function buildParams(country, city) {
   const params = {};
@@ -30,6 +31,7 @@ export default function Projects() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+  const suggestedCities = getAfricanCitiesForCountry(country);
 
   useEffect(() => {
     if (!country && user?.country) setCountry(user.country);
@@ -95,6 +97,8 @@ export default function Projects() {
             city={city}
             onCountryChange={setCountry}
             onCityChange={setCity}
+            extraCountries={AFRICAN_COUNTRIES}
+            extraCities={suggestedCities}
           />
         </div>
 

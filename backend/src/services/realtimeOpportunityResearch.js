@@ -28,7 +28,7 @@ function buildLocationContext({ country, city }) {
   if (country && city) return `${city}, ${country}`;
   if (country) return country;
   if (city) return city;
-  return 'mercado global';
+  return 'mercado africano';
 }
 
 function buildSearchQueries({ sector, country, city }) {
@@ -36,11 +36,15 @@ function buildSearchQueries({ sector, country, city }) {
   const safeCountry = normalizeText(country);
   const safeCity = normalizeText(city);
   const location = [safeCity, safeCountry].filter(Boolean).join(' ');
+  const marketScope = safeCountry || 'Africa';
+  const queries = [
+    [safeSector, location || marketScope, 'startup'].filter(Boolean).join(' '),
+    [safeSector, marketScope, 'market demand'].filter(Boolean).join(' '),
+    [marketScope, safeSector, 'digital adoption'].filter(Boolean).join(' '),
+    [marketScope, safeSector, 'consumer trends'].filter(Boolean).join(' '),
+  ];
 
-  return [
-    [safeSector, location, 'startup'].filter(Boolean).join(' '),
-    [safeSector, safeCountry || 'Africa', 'innovation market'].filter(Boolean).join(' '),
-  ].filter(Boolean);
+  return [...new Set(queries.map(normalizeText).filter(Boolean))];
 }
 
 function dedupeSignals(signals) {
@@ -247,7 +251,7 @@ Limite a ${limit} oportunidades.
 }
 
 export async function researchRealtimeOpportunities({ sector, country, city, limit = 12 }) {
-  const numericLimit = Math.max(1, Math.min(Number.parseInt(limit, 10) || 12, 20));
+  const numericLimit = Math.max(1, Math.min(Number.parseInt(limit, 10) || 12, 24));
   const liveSignals = await fetchNewsSignals({ sector, country, city });
   const signals = liveSignals.length > 0 ? liveSignals : await fetchStoredSignals(Math.max(numericLimit * 2, 10));
 

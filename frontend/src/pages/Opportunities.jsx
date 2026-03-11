@@ -1,17 +1,19 @@
-import { Activity, BarChart3, MapPin, Sparkles } from 'lucide-react';
+import { Activity, BarChart3, MapPin, RefreshCw, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import LocationFilters from '../components/LocationFilters.jsx';
 import { useI18n } from '../context/I18nContext.jsx';
+import { AFRICAN_COUNTRIES, getAfricanCitiesForCountry } from '../data/africanMarkets.js';
 import { opportunitiesAPI } from '../services/api.js';
 
 function emptyPayload() {
   return { data: [], filters: { countries: [], cities: [] }, meta: null };
 }
 
-function buildParams(country, city) {
+function buildParams(country, city, refreshToken) {
   const params = { limit: 24 };
   if (country) params.country = country;
   if (city) params.city = city;
+  if (refreshToken) params.refresh = refreshToken;
   return params;
 }
 
@@ -61,14 +63,15 @@ export default function Opportunities() {
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   useEffect(() => {
     setLoading(true);
-    opportunitiesAPI.researchLive(buildParams(country, city))
+    opportunitiesAPI.researchLive(buildParams(country, city, refreshToken))
       .then(response => setPayload(response.data))
       .catch(async () => {
         try {
-          const response = await opportunitiesAPI.getAll(buildParams(country, city));
+          const response = await opportunitiesAPI.getAll(buildParams(country, city, refreshToken));
           setPayload({
             ...response.data,
             meta: {
@@ -82,7 +85,9 @@ export default function Opportunities() {
         }
       })
       .finally(() => setLoading(false));
-  }, [country, city]);
+  }, [country, city, refreshToken]);
+
+  const suggestedCities = useMemo(() => getAfricanCitiesForCountry(country), [country]);
 
   const summary = useMemo(() => {
     if (payload.data.length === 0) {
@@ -103,6 +108,9 @@ export default function Opportunities() {
   const refreshedAt = payload.meta?.refreshedAt
     ? new Date(payload.meta.refreshedAt).toLocaleString(locale === 'pt' ? 'pt-PT' : 'en-US')
     : null;
+  const scopeLabel = city || country
+    ? messages.opportunitiesPage.scopeSelected.replace('{market}', [city, country].filter(Boolean).join(', '))
+    : messages.opportunitiesPage.scopeAfrica;
 
   return (
     <div className="space-y-6">
@@ -118,6 +126,9 @@ export default function Opportunities() {
               <Sparkles size={12} />
               {messages.opportunitiesPage.liveBadge}
             </div>
+            <p className="mt-3 text-xs uppercase tracking-[0.2em] text-ink-500">
+              {scopeLabel}
+            </p>
           </div>
 
           <LocationFilters
@@ -126,6 +137,8 @@ export default function Opportunities() {
             city={city}
             onCountryChange={setCountry}
             onCityChange={setCity}
+            extraCountries={AFRICAN_COUNTRIES}
+            extraCities={suggestedCities}
           />
         </div>
 
@@ -141,11 +154,22 @@ export default function Opportunities() {
               <div className="filter-label">{messages.opportunitiesPage.researchLabel}</div>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-ink-700">{formatMetaCopy(messages, payload.meta)}</p>
             </div>
-            {payload.meta?.mode && (
-              <span className={`filter-chip ${payload.meta.mode === 'database_fallback' ? '' : 'filter-chip-active'}`}>
-                {payload.meta.mode === 'database_fallback' ? messages.opportunitiesPage.liveFallbackBadge : messages.opportunitiesPage.liveActiveBadge}
-              </span>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="ghost-action inline-flex items-center gap-2"
+                onClick={() => setRefreshToken(current => current + 1)}
+                disabled={loading}
+              >
+                <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+                {loading ? messages.opportunitiesPage.refreshLoading : messages.opportunitiesPage.refreshIdle}
+              </button>
+              {payload.meta?.mode && (
+                <span className={`filter-chip ${payload.meta.mode === 'database_fallback' ? '' : 'filter-chip-active'}`}>
+                  {payload.meta.mode === 'database_fallback' ? messages.opportunitiesPage.liveFallbackBadge : messages.opportunitiesPage.liveActiveBadge}
+                </span>
+              )}
+            </div>
           </div>
           {(payload.meta?.signalsCount || refreshedAt) && (
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-ink-500">

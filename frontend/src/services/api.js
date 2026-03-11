@@ -40,6 +40,8 @@ export const projectsAPI = {
 
 export const analysisAPI = {
   dashboard: () => api.get('/api/analysis/dashboard'),
+  marketInsights: body => api.post('/api/analysis/market-insights', body),
+  etl: body => api.post('/api/analysis/etl', body),
 };
 
 export default api;

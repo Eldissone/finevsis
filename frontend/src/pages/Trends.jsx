@@ -4,6 +4,7 @@ import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 
 import LocationFilters from '../components/LocationFilters.jsx';
 import { useI18n } from '../context/I18nContext.jsx';
 import { trendsAPI } from '../services/api.js';
+import { AFRICAN_COUNTRIES, getAfricanCitiesForCountry } from '../data/africanMarkets.js';
 
 const COLORS = ['#15120e', '#6f7858', '#c79f78', '#60574d', '#cbbca9', '#3d362f'];
 
@@ -30,6 +31,7 @@ export default function Trends() {
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
   const [loading, setLoading] = useState(true);
+  const suggestedCities = getAfricanCitiesForCountry(country);
 
   useEffect(() => {
     setLoading(true);
@@ -93,6 +95,8 @@ export default function Trends() {
             city={city}
             onCountryChange={setCountry}
             onCityChange={setCity}
+            extraCountries={AFRICAN_COUNTRIES}
+            extraCities={suggestedCities}
           />
         </div>
 

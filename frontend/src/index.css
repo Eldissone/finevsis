@@ -94,7 +94,7 @@
   }
 
   .surface {
-    @apply rounded-[2rem] p-6 sm:p-7;
+    @apply rounded-[1rem] p-6 sm:p-7;
     border: 1px solid rgba(203, 188, 169, 0.7);
     background: rgba(247, 242, 234, 0.95);
     box-shadow: var(--paper-shadow);

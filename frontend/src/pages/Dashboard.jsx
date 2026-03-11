@@ -5,6 +5,7 @@ import LocationFilters from '../components/LocationFilters.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useI18n } from '../context/I18nContext.jsx';
 import { analysisAPI, opportunitiesAPI, trendsAPI } from '../services/api.js';
+import { AFRICAN_COUNTRIES, getAfricanCitiesForCountry } from '../data/africanMarkets.js';
 
 const portraitImages = [
   {
@@ -90,6 +91,9 @@ export default function Dashboard() {
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
   const [loading, setLoading] = useState(true);
+  const [populating, setPopulating] = useState(false);
+  const [populateError, setPopulateError] = useState('');
+  const suggestedCities = getAfricanCitiesForCountry(country);
 
   useEffect(() => {
     analysisAPI.dashboard()
@@ -117,6 +121,25 @@ export default function Dashboard() {
   const filters = mergeFilters(trends.filters, opportunities.filters);
   const stats = dashboard?.stats || {};
   const portraitCards = messages.dashboard.portraitCards.map((card, index) => ({ ...card, image: portraitImages[index]?.image }));
+
+  async function populateCountry() {
+    if (!country) return;
+    setPopulating(true);
+    setPopulateError('');
+    try {
+      await analysisAPI.etl({ country, city, limit: 40 });
+      const [trendsResponse, opportunitiesResponse] = await Promise.all([
+        trendsAPI.getAll(buildParams(4, country, city)),
+        opportunitiesAPI.getAll(buildParams(4, country, city)),
+      ]);
+      setTrends(trendsResponse.data);
+      setOpportunities(opportunitiesResponse.data);
+    } catch (err) {
+      setPopulateError('Nao foi possivel popular este pais agora.');
+    } finally {
+      setPopulating(false);
+    }
+  }
   const featureBlurb = messages.dashboard.featureBlurb;
   const showcaseCards = messages.dashboard.showcaseCards;
 
@@ -230,13 +253,29 @@ export default function Dashboard() {
             city={city}
             onCountryChange={setCountry}
             onCityChange={setCity}
+            extraCountries={AFRICAN_COUNTRIES}
+            extraCities={suggestedCities}
           />
-
-          <div className="results-grid">
-            <ResultCard label={messages.dashboard.stats.trends.label} value={stats.trendsCount ?? '--'} copy={messages.dashboard.stats.trends.copy} />
-            <ResultCard label={messages.dashboard.stats.opportunities.label} value={stats.opportunitiesCount ?? '--'} copy={messages.dashboard.stats.opportunities.copy} />
-            <ResultCard label={messages.dashboard.stats.highPriority.label} value={stats.highPriority ?? '--'} copy={messages.dashboard.stats.highPriority.copy} />
+          <div className="space-y-3">
+            <div className="results-grid">
+              <ResultCard label={messages.dashboard.stats.trends.label} value={stats.trendsCount ?? '--'} copy={messages.dashboard.stats.trends.copy} />
+              <ResultCard label={messages.dashboard.stats.opportunities.label} value={stats.opportunitiesCount ?? '--'} copy={messages.dashboard.stats.opportunities.copy} />
+              <ResultCard label={messages.dashboard.stats.highPriority.label} value={stats.highPriority ?? '--'} copy={messages.dashboard.stats.highPriority.copy} />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="ghost-action inline-flex items-center gap-2"
+                onClick={populateCountry}
+                disabled={!country || populating}
+              >
+                <Sparkles size={15} className={populating ? 'animate-spin' : ''} />
+                {populating ? 'Populando...' : 'Popular país'}
+              </button>
+              {populateError && <span className="text-sm text-red-700">{populateError}</span>}
+            </div>
           </div>
+
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
