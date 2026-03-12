@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../lib/prisma.js';
 import { requireAuth } from '../middleware/auth.js';
-import { buildAuthResponse, sanitizeUser } from '../services/authService.js';
+import { buildAuthResponse, sanitizeUser, signAuthToken } from '../services/authService.js';
 import { normalizeOptionalString } from '../utils/locationFilters.js';
 
 const router = Router();
@@ -66,6 +66,14 @@ router.post('/register', async (req, res, next) => {
       },
     });
 
+    const token = signAuthToken(user);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
     res.status(201).json(buildAuthResponse(user));
   } catch (error) {
     next(error);
@@ -86,10 +94,27 @@ router.post('/login', async (req, res, next) => {
       throw error;
     }
 
+    const token = signAuthToken(user);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
     res.json(buildAuthResponse(user));
   } catch (error) {
     next(error);
   }
+});
+
+router.post('/logout', (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  });
+  res.json({ message: 'Logout successful' });
 });
 
 router.get('/me', requireAuth, async (req, res) => {

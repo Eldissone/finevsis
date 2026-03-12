@@ -50,8 +50,8 @@ export default function Analysis() {
       const response = await opportunitiesAPI.analyzeAI({
         description: input,
         sector,
-        country: user?.country,
-        city: user?.city,
+        country: typeof country === 'string' ? country : user?.country,
+        city: typeof city === 'string' ? city : user?.city,
       });
       setResult(response.data);
     } catch (requestError) {
@@ -236,7 +236,7 @@ export default function Analysis() {
 
         <div className="ghost-action inline-flex w-fit items-center gap-2">
           <MapPin size={15} />
-          {user?.city || user?.country || messages.common.noLocation}
+          {city || country || messages.common.allCountries}
         </div>
 
         <div>

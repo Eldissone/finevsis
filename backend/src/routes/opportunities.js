@@ -125,8 +125,8 @@ router.post('/analyze-ai', requireAuth, async (req, res, next) => {
     const analysis = await analyzeOpportunityWithAI({
       description,
       sector,
-      country: normalizeOptionalString(req.body.country) || req.user.country,
-      city: normalizeOptionalString(req.body.city) || req.user.city,
+      country: typeof req.body.country === 'string' ? req.body.country : req.user.country,
+      city: typeof req.body.city === 'string' ? req.body.city : req.user.city,
     });
     const finalScore = calculateOpportunityScore({
       marketDemand: analysis.market_demand,

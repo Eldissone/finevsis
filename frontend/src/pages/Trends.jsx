@@ -105,6 +105,7 @@ export default function Trends() {
             onCityChange={setCity}
             extraCountries={AFRICAN_COUNTRIES}
             extraCities={suggestedCities}
+            onlyExtra
           />
         </div>
 

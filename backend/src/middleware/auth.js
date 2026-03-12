@@ -10,10 +10,9 @@ function unauthorized(message = 'Autenticacao necessaria') {
 
 export async function requireAuth(req, _res, next) {
   try {
-    const header = req.headers.authorization || '';
-    const [scheme, token] = header.split(' ');
+    const token = req.cookies?.token;
 
-    if (scheme !== 'Bearer' || !token) {
+    if (!token) {
       throw unauthorized();
     }
 

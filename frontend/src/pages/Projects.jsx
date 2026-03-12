@@ -54,7 +54,10 @@ export default function Projects() {
     setGenerating(true);
     setError('');
     try {
-      await projectsAPI.generate();
+      await projectsAPI.generate({
+        country: country || undefined,
+        city: city || undefined,
+      });
       loadProjects();
     } catch (requestError) {
       setError(requestError.response?.data?.error || messages.projectsPage.errorFallback);
@@ -86,7 +89,7 @@ export default function Projects() {
               </button>
               <div className="ghost-action inline-flex items-center gap-2">
                 <MapPin size={15} />
-                {user?.city || user?.country || messages.common.noProfileLocation}
+                {city || country || messages.common.allCountries}
               </div>
             </div>
           </div>
@@ -99,6 +102,7 @@ export default function Projects() {
             onCityChange={setCity}
             extraCountries={AFRICAN_COUNTRIES}
             extraCities={suggestedCities}
+            onlyExtra
           />
         </div>
 

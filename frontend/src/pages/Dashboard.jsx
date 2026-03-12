@@ -10,7 +10,7 @@ import { AFRICAN_COUNTRIES, getAfricanCitiesForCountry } from '../data/africanMa
 const portraitImages = [
   // Consumer pulse — crowd/street market
   {
-    image: 'https://images.unsplash.com/photo-1543163521-1bf75e388b52?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1533621748259-7fe05128bea3?auto=format&fit=crop&w=800&q=80',
   },
   // Market interviews — people in conversation
   {
@@ -63,13 +63,13 @@ function mergeFilters(...sources) {
 
 function PortraitCard({ card, index }) {
   const style = {
-    backgroundImage: `url(${card.image})`,
+    backgroundImage: `url('${card.image}')`,
     transform: `perspective(1200px) rotateY(${index < 3 ? -8 + index * 2 : index > 3 ? (index - 3) * 2 : 0}deg)`,
   };
 
   return (
     <div className="portrait-card" style={style}>
-      <div className="portrait-card__image" style={{ backgroundImage: `url(${card.image})` }} />
+      <div className="portrait-card__image" style={{ backgroundImage: `url('${card.image}')` }} />
       <div className="portrait-card__shade" />
       <div className="portrait-card__meta">
         <div className="text-sm font-semibold">{card.name}</div>
@@ -100,6 +100,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [populating, setPopulating] = useState(false);
   const [populateError, setPopulateError] = useState('');
+  const [populateMessage, setPopulateMessage] = useState('');
   const suggestedCities = getAfricanCitiesForCountry(country);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [tick, setTick] = useState(0);
@@ -141,14 +142,29 @@ export default function Dashboard() {
     if (!country) return;
     setPopulating(true);
     setPopulateError('');
+    setPopulateMessage('Job de ETL iniciado — a atualizar em segundos...');
     try {
       await analysisAPI.etl({ country, city, limit: 40 });
-      const [trendsResponse, opportunitiesResponse] = await Promise.all([
-        trendsAPI.getAll(buildParams(4, country, city)),
-        opportunitiesAPI.getAll(buildParams(4, country, city)),
-      ]);
-      setTrends(trendsResponse.data);
-      setOpportunities(opportunitiesResponse.data);
+      let attempt = 0;
+      const poll = async () => {
+        attempt += 1;
+        try {
+          const [trendsResponse, opportunitiesResponse] = await Promise.all([
+            trendsAPI.getAll(buildParams(4, country, city)),
+            opportunitiesAPI.getAll(buildParams(4, country, city)),
+          ]);
+          setTrends(trendsResponse.data);
+          setOpportunities(opportunitiesResponse.data);
+          if ((trendsResponse.data?.data?.length || 0) > 0 || attempt >= 6) {
+            setPopulateMessage(attempt >= 6 ? 'Job concluído (ou timeout) — vista atualizada.' : 'Job concluído — vista atualizada.');
+            return;
+          }
+        } catch {
+          /* ignore per attempt */
+        }
+        setTimeout(poll, 8000);
+      };
+      setTimeout(poll, 8000);
     } catch (err) {
       setPopulateError('Nao foi possivel popular este pais agora.');
     } finally {
@@ -270,6 +286,7 @@ export default function Dashboard() {
             onCityChange={setCity}
             extraCountries={AFRICAN_COUNTRIES}
             extraCities={suggestedCities}
+            onlyExtra
           />
           <div className="space-y-3">
             <div className="results-grid">
@@ -288,6 +305,7 @@ export default function Dashboard() {
                 {populating ? 'Populando...' : 'Popular país'}
               </button>
               {populateError && <span className="text-sm text-red-700">{populateError}</span>}
+              {populateMessage && !populateError && <span className="text-sm text-ink-600">{populateMessage}</span>}
               <button
                 type="button"
                 className={`ghost-action inline-flex items-center gap-2 ${autoRefresh ? 'filter-chip-active' : ''}`}

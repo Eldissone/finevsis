@@ -17,7 +17,6 @@ export function signAuthToken(user) {
 
 export function buildAuthResponse(user) {
   return {
-    token: signAuthToken(user),
     user: sanitizeUser(user),
   };
 }

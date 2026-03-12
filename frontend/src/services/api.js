@@ -1,23 +1,15 @@
 import axios from 'axios';
 
-const TOKEN_KEY = 'finevsis_token';
-
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
   headers: { 'Content-Type': 'application/json' },
-});
-
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  withCredentials: true,
 });
 
 export const authAPI = {
   login: body => api.post('/api/users/login', body),
   register: body => api.post('/api/users/register', body),
+  logout: () => api.post('/api/users/logout'),
   me: () => api.get('/api/users/me'),
   updateMe: body => api.put('/api/users/me', body),
 };
@@ -35,7 +27,7 @@ export const opportunitiesAPI = {
 export const projectsAPI = {
   getAll: params => api.get('/api/projects', { params }),
   create: body => api.post('/api/projects', body),
-  generate: () => api.post('/api/projects/generate'),
+  generate: body => api.post('/api/projects/generate', body),
 };
 
 export const analysisAPI = {

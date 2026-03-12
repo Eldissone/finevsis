@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { authAPI } from '../services/api.js';
 
-const TOKEN_KEY = 'finevsis_token';
 const USER_KEY = 'finevsis_user';
 
 const AuthContext = createContext(null);
@@ -16,21 +15,21 @@ function readStoredUser() {
 }
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [user, setUser] = useState(() => readStoredUser());
   const [ready, setReady] = useState(false);
 
   function persistSession(payload) {
-    localStorage.setItem(TOKEN_KEY, payload.token);
     localStorage.setItem(USER_KEY, JSON.stringify(payload.user));
-    setToken(payload.token);
     setUser(payload.user);
   }
 
-  function logout() {
-    localStorage.removeItem(TOKEN_KEY);
+  async function logout() {
+    try {
+      await authAPI.logout();
+    } catch (e) {
+      console.error('Logout failed', e);
+    }
     localStorage.removeItem(USER_KEY);
-    setToken(null);
     setUser(null);
   }
 
@@ -38,11 +37,7 @@ export function AuthProvider({ children }) {
     let active = true;
 
     async function hydrate() {
-      if (!token) {
-        setReady(true);
-        return;
-      }
-
+      // Always try to fetch the active user session from cookies via /me
       try {
         const response = await authAPI.me();
         if (!active) return;
@@ -50,7 +45,8 @@ export function AuthProvider({ children }) {
         setUser(response.data);
       } catch {
         if (!active) return;
-        logout();
+        localStorage.removeItem(USER_KEY);
+        setUser(null);
       } finally {
         if (active) setReady(true);
       }
@@ -60,7 +56,7 @@ export function AuthProvider({ children }) {
     return () => {
       active = false;
     };
-  }, [token]);
+  }, []);
 
   async function login(credentials) {
     const response = await authAPI.login(credentials);

@@ -32,9 +32,14 @@ export default function LocationFilters({
   onCityChange,
   extraCountries = [],
   extraCities = [],
+  onlyExtra = false,
 }) {
-  const countries = sortValues([...(filters.countries || []), ...extraCountries]);
-  const cities = sortValues([...(filters.cities || []), ...extraCities]);
+  const countries = onlyExtra
+    ? sortValues(extraCountries)
+    : sortValues([...(filters.countries || []), ...extraCountries]);
+  const cities = onlyExtra
+    ? sortValues(extraCities)
+    : sortValues([...(filters.cities || []), ...extraCities]);
   const { messages } = useI18n();
 
   return (

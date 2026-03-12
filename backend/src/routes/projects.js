@@ -50,9 +50,12 @@ router.post('/', async (req, res, next) => {
 
 router.post('/generate', async (req, res, next) => {
   try {
+    const targetCountry = typeof req.body.country === 'string' ? req.body.country : req.user.country;
+    const targetCity = typeof req.body.city === 'string' ? req.body.city : req.user.city;
+
     const preferredWhere = {};
-    if (req.user.country) preferredWhere.country = req.user.country;
-    if (req.user.city) preferredWhere.city = req.user.city;
+    if (targetCountry) preferredWhere.country = targetCountry;
+    if (targetCity) preferredWhere.city = targetCity;
 
     let topOpportunities = await prisma.opportunity.findMany({
       where: preferredWhere,
@@ -67,9 +70,29 @@ router.post('/generate', async (req, res, next) => {
       });
     }
 
+    if (topOpportunities.length === 0) {
+      const dummy = await prisma.opportunity.create({
+        data: {
+          title: `Oportunidade Inicial (${targetCity || targetCountry || 'Mercado Aberto'})`,
+          description: 'Ponto de ignição heurístico gerado para inicializar a esteira de projetos.',
+          sector: 'Geral',
+          country: targetCountry || null,
+          city: targetCity || null,
+          marketDemand: 70,
+          competitionLevel: 40,
+          technicalViability: 65,
+          impactScore: 68,
+          scalability: 60,
+          finalScore: 65,
+          priority: 'medium',
+        },
+      });
+      topOpportunities = [dummy];
+    }
+
     const suggestions = await generateProjectRecommendations(topOpportunities, {
-      country: req.user.country,
-      city: req.user.city,
+      country: targetCountry,
+      city: targetCity,
     });
 
     const createdProjects = await Promise.all(
@@ -81,8 +104,8 @@ router.post('/generate', async (req, res, next) => {
             name: project.name,
             description: project.description || null,
             type: project.type || null,
-            country: referenceOpportunity?.country || req.user.country || null,
-            city: referenceOpportunity?.city || req.user.city || null,
+            country: referenceOpportunity?.country || targetCountry || null,
+            city: referenceOpportunity?.city || targetCity || null,
             techStack: project.tech_stack || project.techStack || [],
             targetAudience: project.target_audience || project.targetAudience || null,
             revenueModel: project.revenue_model || project.revenueModel || null,

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma.js';
 import { generateProjectRecommendations } from '../services/analysisService.js';
+import { marketQueue } from '../queue/marketQueue.js';
 import { upsertTrendsFromMarketData } from '../services/etlService.js';
 
 const router = Router();
@@ -170,8 +171,16 @@ router.post('/etl', async (req, res, next) => {
     const country = typeof req.body.country === 'string' ? req.body.country.trim() : '';
     const city = typeof req.body.city === 'string' ? req.body.city.trim() : '';
     const limit = Number.parseInt(req.body.limit, 10) || 40;
+    if (process.env.REDIS_URL) {
+      try {
+        await marketQueue.add('etlTrends', { country, city, limit });
+        return res.json({ ok: true, message: 'ETL job is processing in background' });
+      } catch (_queueErr) {
+        // Fallback inline
+      }
+    }
     const result = await upsertTrendsFromMarketData({ country, city, limit });
-    res.json({ ok: true, result });
+    res.json({ ok: true, message: 'ETL executed inline', result });
   } catch (err) {
     next(err);
   }

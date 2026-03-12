@@ -148,6 +148,7 @@ export default function Opportunities() {
             onCityChange={setCity}
             extraCountries={AFRICAN_COUNTRIES}
             extraCities={suggestedCities}
+            onlyExtra
           />
         </div>
 
